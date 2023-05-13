@@ -1,0 +1,4 @@
+transaction_provider_states:
+  path: /transaction_provider_states
+  controller: App\Tests\StateController\StateController::transactionServiceProviderState
+  methods: [GET,POST]

@@ -1,0 +1,27 @@
+framework:
+    messenger:
+        failure_transport: failed
+        transports:
+            failed: 'doctrine://default?queue_name=failed'
+            amazon_sqs_transaction:
+                dsn: "%env(resolve:AWS_SQS_DSN_TRANSACTION)%"
+                retry_strategy:
+                    max_retries: 3
+                    delay: 2000
+                    multiplier: 4
+                    max_delay: 0
+            amazon_sqs_notification: "%env(resolve:AWS_SQS_DSN_NOTIFICATION)%"
+            amazon_sqs_monitoring: "%env(resolve:AWS_SQS_DSN_MONITORING)%"
+            reconciliation_aws:
+                serializer: messenger.transport.symfony_serializer
+                dsn: "%env(resolve:AWS_SQS_DSN_RECONCILIATION)%"
+                retry_strategy:
+                    max_retries: 3
+                    delay: 2000
+                    multiplier: 4
+                    max_delay: 0
+        routing:
+            'App\Message\TransactionCheckMessage': amazon_sqs_monitoring
+            'App\Message\TransactionUpdateMessage': amazon_sqs_transaction
+            'App\Message\ExternalAPINotificationMessage': amazon_sqs_notification
+            'App\Message\ReconciliationMessage': reconciliation_aws

@@ -1,0 +1,4 @@
+doctrine:
+  dbal:
+    types:
+      device_status: 'Doctrine\DBAL\Types\StringType'

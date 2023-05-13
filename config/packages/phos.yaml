@@ -1,0 +1,12 @@
+phos:
+  define_managers:      true
+  define_repositories:  true
+  error_handle:
+    enable:               true
+  log:
+    audit:                true
+    exception:
+      enabled:              true
+      elastic:              true
+  serializer:
+    skip_null_values: true

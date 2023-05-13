@@ -1,0 +1,38 @@
+transactions_list:
+  path: /transactions/{page?1}/{limit?20}
+  controller: App\Controller\TransactionController::index
+  methods: POST
+
+transaction_show:
+  path: /transaction/{trnKey}
+  controller: App\Controller\TransactionController::show
+  methods: GET
+
+transaction_create:
+  path: /transaction
+  controller: App\Controller\TransactionController::create
+  methods: POST
+
+transaction_update:
+  path: /transaction/{trnKey}
+  controller: App\Controller\TransactionController::update
+  methods: PUT
+
+transaction_update_refund:
+  path: /transaction/update/refund/{trnKey}
+  controller: App\Controller\TransactionController::refund
+  methods: PUT
+
+analytics_stats_counts:
+  path: /analytics/stats-counts
+  controller: App\Controller\AnalyticsController::statsByPeriodCounts
+  methods: POST
+
+analitics_show:
+    path: /analytics/{userToken}
+    methods: [GET,POST]
+    controller: App\Controller\AnalyticsController::statsByPeriod
+
+аpi_test_routes:
+  resource: routes/test/*
+  condition:  "'%kernel.environment%' === 'test'"

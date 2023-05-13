@@ -1,0 +1,86 @@
+# Read the documentation: https://github.com/FriendsOfSymfony/FOSElasticaBundle/blob/master/Resources/doc/setup.md
+fos_elastica:
+    clients:
+        default:
+            host: '%elasticsearch.host%'
+            port: '%elasticsearch.port%'
+            transport: '%elasticsearch.transport%'
+    indexes:
+        transactions:
+            settings:
+                index:
+                    analysis:
+                        analyzer:
+                            default:
+                                type: whitespace
+                                tokenizer: standard
+                                filter:
+                                    - standard
+                                    - lowercase
+                                    - asciifolding
+
+            types:
+                transaction:
+                    properties:
+                        id:
+                            type: integer
+                        trn_key:
+                            type: text
+                        amount:
+                            type: float
+                        currency:
+                            type: keyword
+                        status: ~
+                        processor:
+                            type: text
+                        transaction_type:
+                            property_path: transactionType
+                            type: keyword
+                        device_id:
+                            property_path: deviceId
+                            type: keyword
+                        terminal_id:
+                            property_path: terminalId
+                        merchant_id:
+                            property_path: pos_card_acceptor_ident_code
+                        merchant:
+                            property_path: merchantIdent
+                            type: text
+                            analyzer: default
+                        create_date:
+                            property_path: createDate
+                            type: date
+                        pos_local_datetime:
+                            property_path: posLocalDateTime
+                            type: date
+                        user_token:
+                            property_path: userToken
+                        remote_service_transaction:
+                            property_path: remoteServiceTransaction
+                        channel:
+                            type: text
+                        retrieval_reference_number:
+                            property_path: retrievalReferenceNumber
+                        sca_type:
+                            property_path: scaType
+                        card_type:
+                            type: keyword
+                        error_code:
+                            type: keyword
+                        stan:
+                            property_path: posSystemTraceAuditNumber
+                            type: keyword
+                        auth_code:
+                            property_path: posAuthCode
+                            type: keyword
+                        acquirer_code:
+                            property_path: posAcquiringInstitutionCode
+                            type: keyword
+                        refundable_amount:
+                            type: float
+                            property_path:  refundableAmount
+
+                    persistence:
+                        # the driver can be orm, mongodb or phpcr
+                        driver: orm
+                        model: App\Entity\Transaction
