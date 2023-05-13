@@ -1,0 +1,33 @@
+image: php:7.4-fpm
+
+definitions:
+  steps:
+    - step: &checks
+        name: Checks
+        script:
+          - apt-get update && apt-get install -y unzip git
+          - pecl install xdebug-2.9.1
+          - docker-php-ext-enable xdebug
+          - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+          - curl -sS https://get.symfony.com/cli/installer | bash
+          - composer install
+          - vendor/bin/phpunit --testsuite Unit --coverage-clover=coverage.xml
+          - vendor/bin/phpstan --memory-limit=-1
+          - /root/.symfony5/bin/symfony check:security
+        artifacts:
+          - coverage.xml
+    - step: &sonar
+        name: SonarQube analysis
+        script:
+          - pipe: sonarsource/sonarqube-scan:1.0.0
+            variables:
+              SONAR_HOST_URL: ${SONAR_HOST_URL}
+              SONAR_TOKEN: ${SONAR_TOKEN}
+
+pipelines:
+  default:
+    - step: *checks
+  branches:
+    development:
+      - step: *checks
+      - step: *sonar

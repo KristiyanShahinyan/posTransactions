@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         colors="true"
+         bootstrap="config/bootstrap.php"
+         verbose="true"
+>
+
+    <php>
+        <ini name="error_reporting" value="-1" />
+        <server name="APP_ENV" value="test" force="true" />
+        <server name="SHELL_VERBOSITY" value="-1" />
+        <env name="SYMFONY_DEPRECATIONS_HELPER" value="disabled" />
+    </php>
+
+    <testsuites>
+        <testsuite name="Transaction Service Provider Tests">
+            <directory suffix=".php">./tests/Provider</directory>
+        </testsuite>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+    </testsuites>
+
+    <coverage>
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+        <exclude>
+            <directory suffix=".php">tests</directory>
+            <directory suffix=".php">migrations</directory>
+        </exclude>
+    </coverage>
+
+    <listeners>
+        <listener class="Symfony\Bridge\PhpUnit\SymfonyTestsListener"/>
+    </listeners>
+</phpunit>

@@ -1,0 +1,100 @@
+service: transaction-service
+provider:
+  name: aws
+  region: eu-central-1
+  runtime: provided.al2
+  stage: prod
+  stackTags:
+    version: ''
+  environment:
+    APP_ENV: 'prod'
+    DATABASE_URL: '${ssm:/transaction-service/prod/database_url}'
+    REDIS_DSN: '${ssm:/services/prod/redis_dsn}'
+    MAILER_URL: 'null://localhost'
+    ELASTICSEARCH_URL: '${ssm:/services/prod/elasticsearch_host}'
+    ELASTICSEARCH_HOST: '${ssm:/services/prod/elasticsearch_host}'
+    ELASTICSEARCH_PORT: '${ssm:/services/prod/elasticsearch_port}'
+    ELASTICSEARCH_TRANSPORT: '${ssm:/services/prod/elasticsearch_transport}'
+    ELASTICSEARCH_USER: '${ssm:/services/prod/elasticsearch_username}'
+    ELASTICSEARCH_PASSWORD: '${ssm:/services/prod/elasticsearch_password}'
+    MESSENGER_TRANSPORT_DSN: '${ssm:/transaction-service/prod/signature-aws-sqs-dsn-transaction}'
+    AWS_SQS_DSN_TRANSACTION: '${ssm:/transaction-service/prod/signature-aws-sqs-dsn-transaction}'
+    AWS_SQS_DSN_NOTIFICATION: '${ssm:/transaction-service/prod/signature-aws-sqs-dsn-notification}'
+    AWS_SQS_DSN_MONITORING: '${ssm:/transaction-service/prod/signature-aws-sqs-dsn-monitoring}'
+    AWS_SQS_DSN_RECONCILIATION: '${ssm:/transaction-service/prod/aws-sqs-dsn-reconciliation}'
+    RECONCILE_BUCKET: '${ssm:/transaction-service/prod/reconcile-bucket}'
+plugins:
+  - ./vendor/bref/bref
+
+# Exclude files from deployment
+package:
+  exclude:
+    - 'node_modules/**'
+    - 'tests/**'
+
+functions:
+  api:
+    handler: public/index.php
+    name: transaction-service
+    description: 'Transactions for PHOS'
+    timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
+    layers:
+      - ${bref:layer.php-74-fpm}
+    events:
+      - alb:
+          listenerArn: '${ssm:/transaction-service/prod/alb}'
+          priority: 1
+          multiValueHeaders: true
+          conditions:
+            path: /
+    vpc:
+      securityGroupIds:
+        - '${ssm:/transaction-service/prod/sg}'
+      subnetIds:
+        - '${ssm:/transaction-service/prod/subnet_1}'
+        - '${ssm:/transaction-service/prod/subnet_2}'
+  worker:
+    handler: bin/consumer.php
+    timeout: 28 # in seconds
+    reservedConcurrency: 5 # max. 5 messages processed in parallel
+    vpc:
+      securityGroupIds:
+        - '${ssm:/transaction-service/prod/sg}'
+      subnetIds:
+        - '${ssm:/transaction-service/prod/subnet_1}'
+        - '${ssm:/transaction-service/prod/subnet_2}'
+    layers:
+      - ${bref:layer.php-74}
+    events:
+      # Read more at https://www.serverless.com/framework/docs/providers/aws/events/sqs/
+      - sqs:
+          arn: '${ssm:/notification-service/prod/signature-aws-sqs-arn-transaction}'
+          batchSize: 5
+  console:
+    handler: bin/console
+    timeout: 28
+    vpc:
+      securityGroupIds:
+        - '${ssm:/transaction-service/prod/sg}'
+      subnetIds:
+        - '${ssm:/transaction-service/prod/subnet_1}'
+        - '${ssm:/transaction-service/prod/subnet_2}'
+    layers:
+      - ${bref:layer.php-74}
+      - ${bref:layer.console}
+    events:
+      - schedule:
+          rate: cron(0 0 * * ? *)
+          input: '"app:restrict-transactions 30"'
+      - schedule:
+          rate: cron(50 21 * * ? *)
+          input: '"app:reconciliation --acquirer 10025170"'
+      - schedule:
+          rate: cron(0 0 * * ? *)
+          input: '"app:reconciliation --acquirer valitor-integration"'
+      - schedule:
+          rate: cron(10 0 * * ? *)
+          input: '"app:reconciliation --affiliate valitor"'
+#      - schedule:
+#          rate: cron(05 0 * * ? *)
+#          input: '"app:reconciliation --affiliate moringa"'
